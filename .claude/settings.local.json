@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(claude-api)",
+      "Skill(claude-api:*)",
+      "Bash(New-Item -ItemType File -Path \"d:\\\\coach study agent\\\\src\\\\.gitkeep\" -Force)",
+      "Bash(Out-Null)",
+      "Bash(New-Item -ItemType File -Path \"d:\\\\coach study agent\\\\data\\\\.gitkeep\" -Force)",
+      "Bash(New-Item -ItemType File -Path \"d:\\\\coach study agent\\\\output\\\\.gitkeep\" -Force)",
+      "Bash(New-Item -ItemType File -Path \"d:\\\\coach study agent\\\\evals\\\\.gitkeep\" -Force)",
+      "Bash(Get-ChildItem \"d:\\\\coach study agent\" -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "PowerShell(New-Item -ItemType File -Path \"d:\\\\coach study agent\\\\src\\\\.gitkeep\" -Force)",
+      "PowerShell(New-Item -ItemType File -Path \"d:\\\\coach study agent\\\\data\\\\.gitkeep\" -Force)",
+      "PowerShell(New-Item -ItemType File -Path \"d:\\\\coach study agent\\\\output\\\\.gitkeep\" -Force)",
+      "PowerShell(New-Item -ItemType File -Path \"d:\\\\coach study agent\\\\evals\\\\.gitkeep\" -Force)",
+      "Bash(npx tsc *)",
+      "Bash(bunx tsc *)",
+      "Bash(bun add *)",
+      "Bash(dir /b \"d:\\\\coach study agent\")"
+    ]
+  }
+}

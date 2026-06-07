@@ -1,0 +1,52 @@
+{
+  "test_cases": [
+    {
+      "id": "tc-01",
+      "student_id": "ram",
+      "course": "DSA",
+      "exam_days": 5,
+      "hours_per_day": 2,
+      "expected_behavior": {
+        "weak_topics_covered": ["LinkedList", "Trees", "DP"],
+        "strong_topics_excluded": ["Arrays", "Graphs"],
+        "prereq_order": [
+          ["LinkedList", "Trees"],
+          ["Trees", "DP"],
+          ["LinkedList", "DP"]
+        ],
+        "max_total_hours": 10
+      }
+    },
+    {
+      "id": "tc-02",
+      "student_id": "priya",
+      "course": "DSA",
+      "exam_days": 4,
+      "hours_per_day": 2,
+      "expected_behavior": {
+        "weak_topics_covered": ["Trees", "Graphs"],
+        "strong_topics_excluded": ["Arrays", "LinkedList"],
+        "prereq_order": [],
+        "max_total_hours": 8
+      }
+    },
+    {
+      "id": "tc-03",
+      "student_id": "alex",
+      "course": "DSA",
+      "exam_days": 2,
+      "hours_per_day": 3,
+      "expected_behavior": {
+        "weak_topics_covered": ["Arrays", "LinkedList", "Trees", "Graphs", "DP"],
+        "strong_topics_excluded": [],
+        "prereq_order": [
+          ["Arrays", "LinkedList"],
+          ["LinkedList", "Trees"],
+          ["Arrays", "Graphs"],
+          ["Trees", "DP"]
+        ],
+        "max_total_hours": 6
+      }
+    }
+  ]
+}

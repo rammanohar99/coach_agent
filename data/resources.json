@@ -1,0 +1,134 @@
+{
+  "resources": {
+    "Arrays": [
+      {
+        "type": "video",
+        "title": "Arrays & Hashing — NeetCode",
+        "url": "https://youtu.be/1UvkTHVNk-I",
+        "duration_mins": 18
+      },
+      {
+        "type": "video",
+        "title": "Two Pointers Technique — NeetCode",
+        "url": "https://youtu.be/p-ss2JNynmw",
+        "duration_mins": 14
+      },
+      {
+        "type": "article",
+        "title": "LeetCode Explore — Array and String",
+        "url": "https://leetcode.com/explore/learn/card/array-and-string/",
+        "duration_mins": 20
+      },
+      {
+        "type": "practice",
+        "title": "LeetCode — Array Problems (Easy to Medium)",
+        "url": "https://leetcode.com/tag/array/",
+        "duration_mins": 60
+      }
+    ],
+    "LinkedList": [
+      {
+        "type": "video",
+        "title": "Linked Lists in 4 Minutes — Reducible",
+        "url": "https://youtu.be/F8AbOfQwl1c",
+        "duration_mins": 14
+      },
+      {
+        "type": "video",
+        "title": "Floyd's Cycle Detection Algorithm — Inside Code",
+        "url": "https://youtu.be/gBTe7lFR3vc",
+        "duration_mins": 11
+      },
+      {
+        "type": "article",
+        "title": "LeetCode Explore — Linked List",
+        "url": "https://leetcode.com/explore/learn/card/linked-list/",
+        "duration_mins": 15
+      },
+      {
+        "type": "practice",
+        "title": "LeetCode — Linked List Problems",
+        "url": "https://leetcode.com/tag/linked-list/",
+        "duration_mins": 75
+      }
+    ],
+    "Trees": [
+      {
+        "type": "video",
+        "title": "Binary Tree Bootcamp: Full Introduction — Back To Back SWE",
+        "url": "https://youtu.be/BHB0B1jFKQc",
+        "duration_mins": 43
+      },
+      {
+        "type": "video",
+        "title": "Tree Traversal Algorithms (BFS & DFS) — William Fiset",
+        "url": "https://youtu.be/kpPgVbMdYHo",
+        "duration_mins": 20
+      },
+      {
+        "type": "article",
+        "title": "LeetCode Explore — Binary Tree",
+        "url": "https://leetcode.com/explore/learn/card/data-structure-tree/",
+        "duration_mins": 20
+      },
+      {
+        "type": "practice",
+        "title": "LeetCode — Tree Problems",
+        "url": "https://leetcode.com/tag/tree/",
+        "duration_mins": 90
+      }
+    ],
+    "Graphs": [
+      {
+        "type": "video",
+        "title": "Graph Theory Algorithms Full Course — freeCodeCamp (William Fiset)",
+        "url": "https://youtu.be/09_LlHjoEiY",
+        "duration_mins": 48
+      },
+      {
+        "type": "video",
+        "title": "Topological Sort — NeetCode",
+        "url": "https://youtu.be/eL10fB0_j3M",
+        "duration_mins": 18
+      },
+      {
+        "type": "article",
+        "title": "LeetCode Explore — Graph",
+        "url": "https://leetcode.com/explore/learn/card/graph/",
+        "duration_mins": 25
+      },
+      {
+        "type": "practice",
+        "title": "LeetCode — Graph Problems",
+        "url": "https://leetcode.com/tag/graph/",
+        "duration_mins": 80
+      }
+    ],
+    "DP": [
+      {
+        "type": "video",
+        "title": "5 Simple Steps for Solving Dynamic Programming — NeetCode",
+        "url": "https://youtu.be/oBt53YbR9Kk",
+        "duration_mins": 19
+      },
+      {
+        "type": "video",
+        "title": "What is Dynamic Programming? — CS Dojo",
+        "url": "https://youtu.be/vYquumk4nWw",
+        "duration_mins": 14
+      },
+      {
+        "type": "article",
+        "title": "LeetCode Explore — Dynamic Programming",
+        "url": "https://leetcode.com/explore/learn/card/dynamic-programming/",
+        "duration_mins": 30
+      },
+      {
+        "type": "practice",
+        "title": "LeetCode — Dynamic Programming Problems",
+        "url": "https://leetcode.com/tag/dynamic-programming/",
+        "duration_mins": 120
+      }
+    ]
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "students": [
+    {
+      "id": "ram",
+      "name": "Ram",
+      "course": "DSA",
+      "scores": {
+        "Arrays": 85,
+        "LinkedList": 40,
+        "Trees": 30,
+        "Graphs": 72,
+        "DP": 20
+      }
+    },
+    {
+      "id": "priya",
+      "name": "Priya",
+      "course": "DSA",
+      "scores": {
+        "Arrays": 60,
+        "LinkedList": 75,
+        "Trees": 45,
+        "Graphs": 30,
+        "DP": 55
+      }
+    },
+    {
+      "id": "alex",
+      "name": "Alex",
+      "course": "DSA",
+      "scores": {
+        "Arrays": 35,
+        "LinkedList": 30,
+        "Trees": 25,
+        "Graphs": 40,
+        "DP": 15
+      }
+    }
+  ]
+}

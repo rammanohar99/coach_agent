@@ -1,0 +1,30 @@
+{
+  "course": "DSA",
+  "topics": [
+    {
+      "name": "Arrays",
+      "difficulty": 1,
+      "prerequisites": []
+    },
+    {
+      "name": "LinkedList",
+      "difficulty": 2,
+      "prerequisites": ["Arrays"]
+    },
+    {
+      "name": "Trees",
+      "difficulty": 3,
+      "prerequisites": ["LinkedList"]
+    },
+    {
+      "name": "Graphs",
+      "difficulty": 4,
+      "prerequisites": ["Arrays"]
+    },
+    {
+      "name": "DP",
+      "difficulty": 5,
+      "prerequisites": ["Trees", "Arrays"]
+    }
+  ]
+}
