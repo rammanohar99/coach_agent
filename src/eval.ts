@@ -1,3 +1,4 @@
+import { query } from "@anthropic-ai/claude-agent-sdk";
 import { runAgent } from "./agent";
 import { readFile, writeFile, mkdir } from "fs/promises";
 import { join } from "path";
@@ -47,6 +48,12 @@ export interface MetricResult {
   details: string;
 }
 
+export interface EvalResult {
+  metrics: MetricResult[];
+  parse_error: string | null;
+  aggregate: number;
+}
+
 interface CaseResult {
   id: string;
   student_id: string;
@@ -55,6 +62,7 @@ interface CaseResult {
   hours_per_day: number;
   metrics: MetricResult[];
   total_score: number;
+  parse_error: string | null;
   error?: string;
 }
 
@@ -188,6 +196,9 @@ function metric1_weakTopicsCovered(plan: Plan, expected: string[]): MetricResult
 }
 
 function metric2_strongTopicsExcluded(plan: Plan, excluded: string[]): MetricResult {
+  if (!plan.day_plan || plan.day_plan.length === 0) {
+    return { name: "strong_topics_excluded", score: 0.0, details: "No valid plan found" };
+  }
   if (excluded.length === 0) {
     return { name: "strong_topics_excluded", score: 1.0, details: "No strong topics to check" };
   }
@@ -201,6 +212,9 @@ function metric2_strongTopicsExcluded(plan: Plan, excluded: string[]): MetricRes
 }
 
 function metric3_prereqOrder(plan: Plan, pairs: [string, string][]): MetricResult {
+  if (!plan.day_plan || plan.day_plan.length === 0) {
+    return { name: "prereq_order", score: 0.0, details: "No valid plan found" };
+  }
   if (pairs.length === 0) {
     return { name: "prereq_order", score: 1.0, details: "No prerequisite pairs to check" };
   }
@@ -222,6 +236,9 @@ function metric3_prereqOrder(plan: Plan, pairs: [string, string][]): MetricResul
 }
 
 function metric4_hoursBudget(plan: Plan, maxHours: number): MetricResult {
+  if (!plan.day_plan || plan.day_plan.length === 0) {
+    return { name: "hours_within_budget", score: 0.0, details: "No valid plan found" };
+  }
   // Sum duration_mins from both flat (day.resources) and nested (topic.resources) shapes
   const totalMins = sumAllResourceMins(plan);
   const totalHours = totalMins / 60;
@@ -259,13 +276,67 @@ function metric5_theoryAndPractice(plan: Plan, weakTopics: string[]): MetricResu
   };
 }
 
-export function scorePlan(plan: Plan, eb: ExpectedBehavior): MetricResult[] {
+async function metric6_planQuality(plan: Plan, weakTopics: string[]): Promise<MetricResult> {
+  const daySummary = (plan.day_plan ?? []).map((day) => ({
+    day: day.day,
+    topics: getDayEntries(day).map((e) => getEntryName(e)).filter(Boolean),
+    resources: [
+      ...(day.resources ?? []),
+      ...getDayEntries(day).flatMap((e) => getEntryResources(e)),
+    ].map((r) => ({ title: r.title, type: r.type, duration_mins: r.duration_mins })),
+  }));
+
+  const judgePrompt =
+    `You are evaluating a student study plan. Score it PASS (1) only if ALL 4 checks pass, FAIL (0) if any check clearly fails.\n\n` +
+    `Check a) Prerequisite order: Are topics studied in prerequisite order across the full plan? ` +
+    `(e.g. LinkedList before Trees, Trees before DP — topics may share a day, just check overall ordering.)\n` +
+    `Check b) Daily workload: Does every day have a reasonable load? ` +
+    `FAIL only if a single day has more than 4 resources. Days with 1-2 resources are fine.\n` +
+    `Check c) Depth on hard topics: Does DP or the hardest topic in the plan appear across at least 2 days of resources?\n` +
+    `Check d) Theory + practice mix: Is there at least one theory resource (video or article) AND at least one practice resource somewhere across the full plan?\n\n` +
+    `Do NOT penalize: a topic finishing and another starting on the same day; days with only 1-2 resources; ` +
+    `plans that use fewer than the maximum available hours.\n\n` +
+    `Weak topics: ${weakTopics.join(", ")}\n` +
+    `Day plan summary:\n${JSON.stringify(daySummary, null, 2)}\n\n` +
+    `Respond with ONLY a JSON object:\n` +
+    `{"score": 0 or 1, "reason": "one sentence explanation"}\n` +
+    `Score 1 = all 4 checks pass. Score 0 = at least one check clearly fails.`;
+
+  try {
+    let text = "";
+    for await (const message of query({
+      prompt: judgePrompt,
+      options: { model: "claude-haiku-4-5", tools: [] },
+    })) {
+      if (message.type === "assistant") {
+        for (const block of message.message.content) {
+          if (block.type === "text" && block.text) text += block.text;
+        }
+      }
+    }
+
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error("No JSON found in judge response");
+    const parsed = JSON.parse(match[0]) as { score: number; reason: string };
+    return {
+      name: "plan_quality",
+      score: parsed.score === 1 ? 1.0 : 0.0,
+      details: parsed.reason ?? "No reason provided",
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { name: "plan_quality", score: 0.0, details: `Judge call failed: ${msg}` };
+  }
+}
+
+export async function scorePlan(plan: Plan, eb: ExpectedBehavior): Promise<MetricResult[]> {
   return [
     metric1_weakTopicsCovered(plan, eb.weak_topics_covered),
     metric2_strongTopicsExcluded(plan, eb.strong_topics_excluded),
     metric3_prereqOrder(plan, eb.prereq_order),
     metric4_hoursBudget(plan, eb.max_total_hours),
     metric5_theoryAndPractice(plan, eb.weak_topics_covered),
+    await metric6_planQuality(plan, eb.weak_topics_covered),
   ];
 }
 
@@ -276,45 +347,59 @@ const DASH = "─".repeat(50);
 
 function printCaseResult(tc: TestCase, result: CaseResult) {
   console.log(`\nTest Case ${tc.id}: ${tc.student_id} | ${tc.course} | ${tc.exam_days}d × ${tc.hours_per_day}h`);
+  if (result.parse_error !== null) {
+    console.log(`  [PARSE ERROR] ${result.parse_error}`);
+  }
   for (const m of result.metrics) {
     const mark = m.score === 1.0 ? "✓" : "✗";
     const namePad = m.name.padEnd(26);
     console.log(`  ${mark} ${namePad}  ${m.score.toFixed(1)} / 1.0   ${m.details}`);
   }
   console.log(`  ${DASH}`);
-  console.log(`  Score: ${result.total_score.toFixed(1)} / 5.0\n`);
+  console.log(`  Score: ${result.total_score.toFixed(1)} / 6.0\n`);
 }
 
 // ─── Main eval runner ─────────────────────────────────────────────────────────
+
+// Pass --score-only to skip agent runs and score whatever plan files exist on disk.
+const SCORE_ONLY = process.argv.includes("--score-only");
 
 async function runEval() {
   const { test_cases: testCases } = (await Bun.file("evals/test-cases.json").json()) as {
     test_cases: TestCase[];
   };
 
+  if (SCORE_ONLY) {
+    console.log("[INFO] --score-only: skipping agent runs, scoring existing plan files.\n");
+  }
+
   const results: CaseResult[] = [];
 
   for (const tc of testCases) {
     console.log(`\n${BAR}`);
-    console.log(` Running ${tc.id}: ${tc.student_id} | ${tc.course} | ${tc.exam_days}d × ${tc.hours_per_day}h`);
+    console.log(` ${SCORE_ONLY ? "Scoring" : "Running"} ${tc.id}: ${tc.student_id} | ${tc.course} | ${tc.exam_days}d × ${tc.hours_per_day}h`);
     console.log(BAR);
 
     let metrics: MetricResult[];
     let error: string | undefined;
+    let parseError: string | null = null;
 
     try {
-      await runAgent(tc.student_id, tc.course, tc.exam_days, tc.hours_per_day);
+      if (!SCORE_ONLY) {
+        await runAgent(tc.student_id, tc.course, tc.exam_days, tc.hours_per_day);
+      }
 
       const planPath = join("output", `${tc.student_id}_plan.json`);
       const plan = JSON.parse(await readFile(planPath, "utf8")) as Plan;
-      metrics = scorePlan(plan, tc.expected_behavior);
+      metrics = await scorePlan(plan, tc.expected_behavior);
     } catch (err) {
       error = err instanceof Error ? err.message : String(err);
+      parseError = error;
       console.error(`[EVAL ERROR] ${error}`);
       const fail = (name: string): MetricResult => ({
         name,
         score: 0.0,
-        details: "Agent run failed",
+        details: "Skipped: parse/structural error",
       });
       metrics = [
         fail("weak_topics_covered"),
@@ -322,6 +407,7 @@ async function runEval() {
         fail("prereq_order"),
         fail("hours_within_budget"),
         fail("theory_and_practice"),
+        fail("plan_quality"),
       ];
     }
 
@@ -334,6 +420,7 @@ async function runEval() {
       hours_per_day: tc.hours_per_day,
       metrics,
       total_score: total,
+      parse_error: parseError,
       ...(error ? { error } : {}),
     });
   }
@@ -352,7 +439,7 @@ async function runEval() {
   const aggregate = results.reduce((s, r) => s + r.total_score, 0) / results.length;
 
   console.log(BAR);
-  console.log(` AGGREGATE SCORE: ${aggregate.toFixed(2)} / 5.00`);
+  console.log(` AGGREGATE SCORE: ${aggregate.toFixed(2)} / 6.00`);
   console.log(BAR + "\n");
 
   // ─── Save results ──────────────────────────────────────────────────────────
@@ -365,7 +452,7 @@ async function runEval() {
       {
         timestamp: new Date().toISOString(),
         aggregate_score: parseFloat(aggregate.toFixed(2)),
-        max_score_per_case: 5.0,
+        max_score_per_case: 6.0,
         num_cases: results.length,
         cases: results,
       },

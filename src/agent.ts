@@ -7,6 +7,7 @@ import {
   calculate_time_budget,
   save_plan,
 } from "./tools";
+import { PlanSchema } from "./schema";
 
 const MODEL = "claude-haiku-4-5";
 
@@ -18,17 +19,20 @@ You are a personalized study coach for computer science students. Your goal is t
 Complete ALL of the following steps in order using the available tools:
 
 1. Call get_student_data to retrieve the student's current scores.
-2. Identify weak topics: any topic with a score below 60 is considered weak.
+2. Identify ALL topics where the student's score is strictly less than 60 as weak topics. Do not skip any topic below 60 regardless of whether it has prerequisites or is considered foundational.
 3. Call get_curriculum to understand topic difficulty levels and prerequisite chains.
 4. Resolve prerequisite order for weak topics:
    - If a weak topic has a prerequisite that is also weak, the prerequisite must be studied first.
    - Build a correctly ordered list (most foundational first).
 5. Call calculate_time_budget with the exam timeline and the ordered weak topic list.
+   - Read the returned allocations array carefully — each entry has { topic, hours, minutes, priority }.
+   - Record these allocations. You will use the hours values directly in step 7; do not invent your own hour values.
 6. For each weak topic (in order), call get_resources to gather learning materials.
 7. Assemble a day-by-day study plan. Each day must:
-   - Cover specific topics based on the time budget
-   - List concrete resources (title, type, estimated duration) for that day
-   - Stay within the hours-per-day limit
+   - Assign hours to each topic STRICTLY using the hours values from the calculate_time_budget allocations — do not invent your own hour allocations.
+   - Distribute topics across days so each day stays within the hours-per-day limit, drawing from the allocated hours.
+   - List concrete resources (title, type, estimated duration) for that day.
+   - When building the day plan, the sum of all resource duration_mins across ALL days converted to hours MUST NOT exceed exam_days × hours_per_day. If resources exceed the budget, select only the highest-priority resources (video first, then article, then practice) until the total fits within budget.
 8. Call save_plan with the student_id and the complete plan object containing:
    - student info (id, name, course)
    - weak_topics list
@@ -42,8 +46,9 @@ Complete ALL of the following steps in order using the available tools:
 
 Critical rules:
 - Always respect prerequisite order. If Trees requires LinkedList and both are weak, LinkedList must come before Trees.
+- For every weak topic, you MUST include at least one practice resource (type: practice) in the day plan, even if it means reducing the duration_mins of other resources to fit within the budget. Theory without practice is incomplete.
 - Do not stop until all 9 steps are complete and the plan is saved.
-- If a tool returns an error, report what failed and why, then stop gracefully.
+- If any tool returns an error, immediately output a one-sentence explanation of what failed and stop — do not call any more tools, do not correct the input, do not retry with different arguments.
 
 OUTPUT FORMAT RULE — MANDATORY:
 Call save_plan with exactly this structure, no variations:
@@ -56,9 +61,10 @@ Call save_plan with exactly this structure, no variations:
   weak_topics: string[],  // flat string array always
   day_plan: [{
     day: number,
-    topics: string[],     // flat string array always
+    topics: string[],         // flat string array always
     total_hours: number,
-    resources: [{         // always at day level, never nested
+    allocated_hours: number,  // sum of calculate_time_budget hours for the topics on this day
+    resources: [{             // always at day level, never nested
       title: string,
       type: video|article|practice,
       duration_mins: number,
@@ -84,6 +90,8 @@ function logResult(result: unknown) {
 function logError(message: string) {
   console.log(`[ERROR]  ${message}`);
 }
+
+// PlanSchema is imported from ./schema — see src/schema.ts for the definition.
 
 // ─── In-process MCP server ────────────────────────────────────────────────────
 //
@@ -198,8 +206,17 @@ const studyCoachServer = createSdkMcpServer({
       },
       async ({ student_id, plan }) => {
         logTool("save_plan", { student_id, plan });
+        const parsed = PlanSchema.safeParse(plan);
+        if (!parsed.success) {
+          const details = parsed.error.format();
+          console.log(`[SCHEMA ERROR] ${JSON.stringify(details)}`);
+          return {
+            content: [{ type: "text" as const, text: JSON.stringify({ error: "Plan schema validation failed", details }) }],
+            isError: true,
+          };
+        }
         try {
-          const result = await save_plan(student_id, plan as object);
+          const result = await save_plan(student_id, parsed.data);
           logResult(result);
           return { content: [{ type: "text" as const, text: JSON.stringify(result) }] };
         } catch (err) {
@@ -312,12 +329,12 @@ function parseArgs() {
   const examDays = Number(examDaysRaw);
   const hoursPerDay = Number(hoursRaw);
 
-  if (!Number.isFinite(examDays) || examDays < 1) {
-    console.error("--exam-days must be a positive integer");
+  if (!Number.isFinite(examDays) || examDays < 1 || examDays > 365) {
+    console.error("--exam-days must be a positive integer between 1 and 365");
     process.exit(1);
   }
-  if (!Number.isFinite(hoursPerDay) || hoursPerDay <= 0) {
-    console.error("--hours must be a positive number");
+  if (!Number.isFinite(hoursPerDay) || hoursPerDay <= 0 || hoursPerDay > 24) {
+    console.error("--hours must be a positive number between 0 and 24");
     process.exit(1);
   }
 

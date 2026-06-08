@@ -17,7 +17,16 @@
       "Bash(npx tsc *)",
       "Bash(bunx tsc *)",
       "Bash(bun add *)",
-      "Bash(dir /b \"d:\\\\coach study agent\")"
+      "Bash(dir /b \"d:\\\\coach study agent\")",
+      "Bash(bun run *)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(bun -e ' *)",
+      "Bash(echo \"EXIT3:$?\")",
+      "Bash(rm -rf output)",
+      "Bash(bun -e \"import { save_plan } from './src/tools.ts'; const r = await save_plan\\('d1test', {foo:'bar'}\\); console.log\\(JSON.stringify\\(r\\)\\); import { readFile } from 'fs/promises'; const f = await readFile\\('output/d1test_plan.json','utf8'\\); console.log\\('file:', f\\)\")",
+      "Bash(echo \"TSC EXIT:$?\")",
+      "Bash(bun -e \"const p = await Bun.file\\('output/ram_plan.json'\\).json\\(\\); for \\(const d of p.day_plan\\) console.log\\('Day', d.day, 'allocated_hours:', d.allocated_hours, 'total_hours:', d.total_hours\\)\")",
+      "Bash(Remove-Item \"d:\\\\study coach agent\\\\output\\\\jordan_plan.json\")"
     ]
   }
 }

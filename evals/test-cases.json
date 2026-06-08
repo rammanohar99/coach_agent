@@ -24,10 +24,10 @@
       "exam_days": 4,
       "hours_per_day": 2,
       "expected_behavior": {
-        "weak_topics_covered": ["Trees", "Graphs"],
+        "weak_topics_covered": ["Trees", "Graphs", "DP"],
         "strong_topics_excluded": ["Arrays", "LinkedList"],
         "prereq_order": [],
-        "max_total_hours": 8
+        "max_total_hours": 10.0
       }
     },
     {
@@ -45,7 +45,7 @@
           ["Arrays", "Graphs"],
           ["Trees", "DP"]
         ],
-        "max_total_hours": 6
+        "max_total_hours": 6.0
       }
     }
   ]

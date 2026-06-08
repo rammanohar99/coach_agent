@@ -1,5 +1,6 @@
 import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
+import { PlanSchema } from "./schema";
 
 // ─── Data shape types ────────────────────────────────────────────────────────
 
@@ -103,10 +104,16 @@ export function calculate_time_budget(
   return { total_hours, exam_days, hours_per_day, allocations };
 }
 
-export async function save_plan(student_id: string, plan: object) {
+export async function save_plan(student_id: string, plan: unknown) {
+  const parsed = PlanSchema.safeParse(plan);
+  if (!parsed.success) {
+    throw new Error(
+      `Plan schema validation failed: ${JSON.stringify(parsed.error.format())}`
+    );
+  }
   await mkdir("output", { recursive: true });
   const filepath = join("output", `${student_id}_plan.json`);
-  await writeFile(filepath, JSON.stringify(plan, null, 2), "utf8");
+  await writeFile(filepath, JSON.stringify(parsed.data, null, 2), "utf8");
   return { success: true, message: "Plan saved successfully", file_path: filepath };
 }
 

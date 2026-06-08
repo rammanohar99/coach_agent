@@ -4,8 +4,10 @@
   "description": "AI-powered study coach for LMS content",
   "type": "module",
   "scripts": {
-    "dev": "bun run src/index.ts",
-    "start": "bun run src/index.ts"
+    "agent": "bun run src/agent.ts",
+    "eval": "bun run src/eval.ts",
+    "optimizer": "bun run src/optimizer.ts",
+    "dev": "bun run src/agent.ts"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.3.167",
